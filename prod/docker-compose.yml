@@ -84,7 +84,7 @@ services:
       SPRING_APPLICATION_NAME: "eurekaserver"
 
   accounts:
-    image: "jayadurga332k/accounts:v2"
+    image: "jayadurga332k/accounts:v4"
     container_name: accounts-ms
     ports:
       - "8080:8080"
@@ -102,7 +102,7 @@ services:
       service: microservice-eureka-config
 
   cards:
-    image: "jayadurga332k/cards:v2"
+    image: "jayadurga332k/cards:v4"
     container_name: cards-ms
     ports:
       - "9001:9001"
@@ -120,7 +120,7 @@ services:
       service: microservice-eureka-config
 
   loans:
-    image: "jayadurga332k/loans:v2"
+    image: "jayadurga332k/loans:v4"
     container_name: loans-ms
     ports:
       - "8090:8090"
