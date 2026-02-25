@@ -1,58 +1,58 @@
 services:
-#  accountsdb:
-#    container_name: accountsdb
-#    ports:
-#      - 3307:3306
-#    environment:
-#      MYSQL_DATABASE: accountsdb
-#    extends:
-#      file: common-config.yml
-#      service: microservice-db-config
-#
-#  loansdb:
-#    container_name: loansdb
-#    ports:
-#      - 3308:3306
-#    environment:
-#      MYSQL_DATABASE: loansdb
-#    extends:
-#      file: common-config.yml
-#      service: microservice-db-config
-#
-#  cardsdb:
-#    container_name: cardsdb
-#    ports:
-#      - 3309:3306
-#    environment:
-#      MYSQL_DATABASE: cardsdb
-#    extends:
-#      file: common-config.yml
-#      service: microservice-db-config
-#
-#  rabbit:
-#    image: rabbitmq:4-management
-#    hostname: rabbitmq
-#    ports:
-#      - "5672:5672"
-#      - "15672:15672"
-#    healthcheck:
-#      test: rabbitmq-diagnostics check_port_connectivity
-#      interval: 10s
-#      timeout: 5s
-#      retries: 10
-#      start_period: 5s
-#    extends:
-#      file: common-config.yml
-#      service: network-deploy-service
+  #  accountsdb:
+  #    container_name: accountsdb
+  #    ports:
+  #      - 3307:3306
+  #    environment:
+  #      MYSQL_DATABASE: accountsdb
+  #    extends:
+  #      file: common-config.yml
+  #      service: microservice-db-config
+  #
+  #  loansdb:
+  #    container_name: loansdb
+  #    ports:
+  #      - 3308:3306
+  #    environment:
+  #      MYSQL_DATABASE: loansdb
+  #    extends:
+  #      file: common-config.yml
+  #      service: microservice-db-config
+  #
+  #  cardsdb:
+  #    container_name: cardsdb
+  #    ports:
+  #      - 3309:3306
+  #    environment:
+  #      MYSQL_DATABASE: cardsdb
+  #    extends:
+  #      file: common-config.yml
+  #      service: microservice-db-config
+  #
+  #  rabbit:
+  #    image: rabbitmq:4-management
+  #    hostname: rabbitmq
+  #    ports:
+  #      - "5672:5672"
+  #      - "15672:15672"
+  #    healthcheck:
+  #      test: rabbitmq-diagnostics check_port_connectivity
+  #      interval: 10s
+  #      timeout: 5s
+  #      retries: 10
+  #      start_period: 5s
+  #    extends:
+  #      file: common-config.yml
+  #      service: network-deploy-service
 
   configserver:
     image: "jayadurga332k/configserver:v1"
     container_name: configserver-ms
     ports:
       - "8071:8071"
-#    depends_on:
-#      rabbit:
-#        condition: service_healthy
+    #    depends_on:
+    #      rabbit:
+    #        condition: service_healthy
     healthcheck:
       test: "curl --fail --silent localhost:8071/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
@@ -84,17 +84,23 @@ services:
       SPRING_APPLICATION_NAME: "eurekaserver"
 
   accounts:
-    image: "jayadurga332k/accounts:v4"
+    image: "jayadurga332k/accounts:v5"
     container_name: accounts-ms
     ports:
       - "8080:8080"
     depends_on:
-#      accountsdb:
-#        condition: service_healthy
+      #      accountsdb:
+      #        condition: service_healthy
       configserver:
         condition: service_healthy
       eurekaserver:
         condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       SPRING_APPLICATION_NAME: "accounts"
     extends:
@@ -102,17 +108,23 @@ services:
       service: microservice-eureka-config
 
   cards:
-    image: "jayadurga332k/cards:v4"
+    image: "jayadurga332k/cards:v5"
     container_name: cards-ms
     ports:
       - "9001:9001"
     depends_on:
-#      cardsdb:
-#        condition: service_healthy
+      #      cardsdb:
+      #        condition: service_healthy
       configserver:
         condition: service_healthy
       eurekaserver:
         condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:9001/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       SPRING_APPLICATION_NAME: "cards"
     extends:
@@ -120,19 +132,43 @@ services:
       service: microservice-eureka-config
 
   loans:
-    image: "jayadurga332k/loans:v4"
+    image: "jayadurga332k/loans:v5"
     container_name: loans-ms
     ports:
       - "8090:8090"
     depends_on:
-#      loansdb:
-#        condition: service_healthy
+      #      loansdb:
+      #        condition: service_healthy
       configserver:
         condition: service_healthy
       eurekaserver:
         condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8090/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       SPRING_APPLICATION_NAME: "loans"
+    extends:
+      file: common-config.yml
+      service: microservice-eureka-config
+
+  gatewayserver:
+    image: "jayadurga332k/gatewayserver:v1"
+    container_name: gatewayserver-ms
+    ports:
+      - "8072:8072"
+    depends_on:
+      accounts:
+        condition: service_healthy
+      cards:
+        condition: service_healthy
+      loans:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "gatewayserver"
     extends:
       file: common-config.yml
       service: microservice-eureka-config
